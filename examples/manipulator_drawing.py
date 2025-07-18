@@ -2,7 +2,9 @@ import mujoco as mj
 import numpy as np
 from mujoco.glfw import glfw
 from numpy.linalg import inv
+import os, sys
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from mujoco_base import MuJoCoBase
 
 
@@ -47,10 +49,12 @@ class ManipulatorDrawing(MuJoCoBase):
 
         # Δq = Jinv * Δx
         J = jacp[[0, 2], :]
-        dx = np.array([
-            [self.x_0 + self.r * np.cos(data.time) - self.data.sensordata[0]],
-            [self.z_0 + self.r * np.sin(data.time) - self.data.sensordata[2]]
-        ])
+        dx = np.array(
+            [
+                [self.x_0 + self.r * np.cos(data.time) - self.data.sensordata[0]],
+                [self.z_0 + self.r * np.sin(data.time) - self.data.sensordata[2]],
+            ]
+        )
         dq = inv(J) @ dx
 
         # Target position is q + Δq
@@ -61,7 +65,7 @@ class ManipulatorDrawing(MuJoCoBase):
         while not glfw.window_should_close(self.window):
             simstart = self.data.time
 
-            while (self.data.time - simstart < 1.0/60.0):
+            while self.data.time - simstart < 1.0 / 60.0:
                 # Step simulation environment
                 mj.mj_step(self.model, self.data)
 
@@ -69,13 +73,19 @@ class ManipulatorDrawing(MuJoCoBase):
                 break
 
             # get framebuffer viewport
-            viewport_width, viewport_height = glfw.get_framebuffer_size(
-                self.window)
+            viewport_width, viewport_height = glfw.get_framebuffer_size(self.window)
             viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
 
             # Update scene and render
-            mj.mjv_updateScene(self.model, self.data, self.opt, None, self.cam,
-                               mj.mjtCatBit.mjCAT_ALL.value, self.scene)
+            mj.mjv_updateScene(
+                self.model,
+                self.data,
+                self.opt,
+                None,
+                self.cam,
+                mj.mjtCatBit.mjCAT_ALL.value,
+                self.scene,
+            )
             mj.mjr_render(viewport, self.scene, self.context)
 
             # swap OpenGL buffers (blocking call due to v-sync)

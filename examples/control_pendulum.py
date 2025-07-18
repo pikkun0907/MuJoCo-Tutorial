@@ -1,7 +1,9 @@
 import mujoco as mj
 import numpy as np
 from mujoco.glfw import glfw
+import os, sys
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from mujoco_base import MuJoCoBase
 
 
@@ -12,7 +14,7 @@ class ContolPendulum(MuJoCoBase):
 
     def reset(self):
         # Set initial angle of pendulum
-        self.data.qpos[0] = np.pi/2
+        self.data.qpos[0] = np.pi / 2
 
         # Set camera configuration
         self.cam.azimuth = 90.0
@@ -33,9 +35,9 @@ class ContolPendulum(MuJoCoBase):
         """
         if self.actuator_type == "torque":
             self.model.actuator_gainprm[0, 0] = 1
-            self.data.ctrl[0] = -10 * \
-                (self.data.sensordata[0] - 0.0) - \
-                1 * (self.data.sensordata[1] - 0.0)
+            self.data.ctrl[0] = -10 * (self.data.sensordata[0] - 0.0) - 1 * (
+                self.data.sensordata[1] - 0.0
+            )
         elif self.actuator_type == "servo":
             kp = 10.0
             self.model.actuator_gainprm[1, 0] = kp
@@ -51,18 +53,24 @@ class ContolPendulum(MuJoCoBase):
         while not glfw.window_should_close(self.window):
             simstart = self.data.time
 
-            while (self.data.time - simstart < 1.0/60.0):
+            while self.data.time - simstart < 1.0 / 60.0:
                 # Step simulation environment
                 mj.mj_step(self.model, self.data)
 
             # get framebuffer viewport
-            viewport_width, viewport_height = glfw.get_framebuffer_size(
-                self.window)
+            viewport_width, viewport_height = glfw.get_framebuffer_size(self.window)
             viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
 
             # Update scene and render
-            mj.mjv_updateScene(self.model, self.data, self.opt, None, self.cam,
-                               mj.mjtCatBit.mjCAT_ALL.value, self.scene)
+            mj.mjv_updateScene(
+                self.model,
+                self.data,
+                self.opt,
+                None,
+                self.cam,
+                mj.mjtCatBit.mjCAT_ALL.value,
+                self.scene,
+            )
             mj.mjr_render(viewport, self.scene, self.context)
 
             # swap OpenGL buffers (blocking call due to v-sync)
